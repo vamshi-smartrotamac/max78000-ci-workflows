@@ -1,0 +1,94 @@
+name: "Create GitHub Release"
+description: "Create a GitHub release and generate Changelog"
+inputs:
+  categories:
+    type: string
+    required: false
+    description: Changelog categories
+  tag-pattern:
+    type: string
+    required: false
+    description: tag pattern to filter PRs in order to generate the changelog
+  files:
+    type: string
+    required: false
+    description: Glob pattern for build files associated to the release
+  github_token:
+    required: true
+    description: GitHub token
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build changelog configuration
+      id: get_changelog_conf
+      uses: actions/github-script@v7
+      env:
+        INPUT_CATEGORIES: ${{ inputs.categories }}
+        INPUT_TAG-PATTERN: ${{ inputs.tag-pattern }}
+      with:
+        script: |
+            // Default categories
+            let categories = [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["Feature"],
+                  "exhaustive": true
+                },
+                {
+                  "title": "## 🐛 Bug fixes",
+                  "labels": ["Fix"],
+                  "exhaustive": true
+                },
+            ]
+            const inputCategories = core.getInput('categories')
+            if (inputCategories) {
+              categories = JSON.parse(inputCategories)
+            }
+            result = {
+              categories
+            }
+            const tagPattern = core.getInput('tag-pattern')
+            if (tagPattern != "") {
+              result["tag_resolver"] = {
+                "filter" : {
+                  "pattern": tagPattern,
+                  "flags": "gu"
+                },
+                "transformer": {
+                  "pattern": tagPattern,
+                  "target": "$1"
+                }
+              }
+            }
+            return result
+    - name: Build Changelog
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@v3
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+      with:
+        configurationJson: ${{ steps.get_changelog_conf.outputs.result }}
+    - name: Resolve wheel file glob
+      id: resolve-files
+      if: ${{ inputs.files != '' }}
+      shell: bash
+      run: |
+        # Poetry normalises hyphens to underscores in wheel filenames.
+        # Replace each '-' with '[-_]' so the glob matches both forms.
+        # Use a heredoc so MULTI-LINE file lists are written to GITHUB_OUTPUT
+        # correctly (a plain `echo key=value` breaks on newlines).
+        {
+          echo "pattern<<__GH_EOF__"
+          echo "${FILES//-/[-_]}"
+          echo "__GH_EOF__"
+        } >> "$GITHUB_OUTPUT"
+      env:
+        FILES: ${{ inputs.files }}
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.build_changelog.outputs.changelog }}
+        files: ${{ steps.resolve-files.outputs.pattern || inputs.files }}
+        fail_on_unmatched_files: true
+        prerelease: true

@@ -1,0 +1,27 @@
+name: Build firmware docker image (reusable)
+
+# Reusable build-only check. Verifies the Dockerfile builds; does not push.
+on:
+  workflow_call:
+    inputs:
+      dockerfile-path:
+        type: string
+        required: true
+
+jobs:
+  build-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile-path }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

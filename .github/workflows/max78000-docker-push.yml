@@ -1,0 +1,25 @@
+name: Publish MAX78000 docker image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docker/firmware/max78000/Dockerfile
+      - .github/workflows/max78000-docker-push.yml
+      - .github/workflows/firmware-image-push.yml
+  schedule:
+    # Every Monday at 4:15am
+    - cron: '15 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/firmware-image-push.yml
+    with:
+      dockerfile-path: docker/firmware/max78000/Dockerfile
+      image-name: max78000-toolchain
+      image-tag: v2024_10
