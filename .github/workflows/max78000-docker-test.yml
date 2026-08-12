@@ -1,0 +1,16 @@
+name: Build MAX78000 docker image
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docker/firmware/max78000/Dockerfile
+      - .github/workflows/max78000-docker-test.yml
+      - .github/workflows/firmware-image-test.yml
+
+jobs:
+  test:
+    uses: ./.github/workflows/firmware-image-test.yml
+    with:
+      dockerfile-path: docker/firmware/max78000/Dockerfile

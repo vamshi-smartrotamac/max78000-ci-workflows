@@ -1,0 +1,24 @@
+name: clang-format Check
+on:
+  workflow_call:
+    inputs:
+      check-paths:
+        type: string
+      include-regex:
+        type: string
+      exclude-regex:
+        type: string
+
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format style check for C/C++/Protobuf programs.
+        uses: jidicula/clang-format-action@v4.10.2
+        with:
+          clang-format-version: "15"
+          check-path: ${{ inputs.check-paths }}
+          include-regex: ${{ inputs.include-regex }}
+          exclude-regex: ${{ inputs.exclude-regex }}

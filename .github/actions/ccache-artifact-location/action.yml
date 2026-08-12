@@ -1,0 +1,20 @@
+name: 'Set up cache'
+description: 'Set up cache for build artifacts'
+inputs:
+  files:
+    type: string
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up cached content location
+      shell: bash
+      run: echo "build_artifacts=$CACHE_OUTPUT" >> $GITHUB_ENV
+
+    - name: Cache build artifacts
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.build_artifacts }}
+        key: cache-build-${{ hashFiles( inputs.files ) }}
+        restore-keys: cache-build
