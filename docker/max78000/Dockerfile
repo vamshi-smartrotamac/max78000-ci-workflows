@@ -2,9 +2,10 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Base tooling + ccache (ccache is required by the ccache-artifact-location action)
+# Base tooling + ccache (ccache is required by the ccache-artifact-location action).
+# openssh-client is needed for SSH-based private submodule checkout in consuming repos.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git make wget xz-utils ca-certificates clang-format python3 ccache \
+        git make wget xz-utils ca-certificates clang-format python3 ccache openssh-client \
     && ln -sf /usr/bin/python3 /usr/local/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
