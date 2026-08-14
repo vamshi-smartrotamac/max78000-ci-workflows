@@ -76,8 +76,13 @@ runs:
       run: |
         # Poetry normalises hyphens to underscores in wheel filenames.
         # Replace each '-' with '[-_]' so the glob matches both forms.
-        FLEXIBLE="${FILES//-/[-_]}"
-        echo "pattern=${FLEXIBLE}" >> "$GITHUB_OUTPUT"
+        # Use a heredoc so MULTI-LINE file lists are written to GITHUB_OUTPUT
+        # correctly (a plain `echo key=value` breaks on newlines).
+        {
+          echo "pattern<<__GH_EOF__"
+          echo "${FILES//-/[-_]}"
+          echo "__GH_EOF__"
+        } >> "$GITHUB_OUTPUT"
       env:
         FILES: ${{ inputs.files }}
     - name: Create GitHub release
